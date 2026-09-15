@@ -37,7 +37,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-600 shrink-0">
             <Link to="/" className={`hover:text-blue-600 transition ${isHome ? 'text-blue-600 font-bold' : ''}`}>
               {t('home')}
             </Link>
@@ -53,7 +53,7 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Right Action Area */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="hidden sm:block">
               <LanguageSelector variant="compact" />
             </div>
@@ -65,18 +65,18 @@ export const Navbar: React.FC = () => {
             {/* Direct Portal Access Buttons */}
             <Link
               to="/citizen"
-              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-sm transition"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-sm transition shrink-0"
             >
-              <User className="w-4 h-4 text-blue-600" />
+              <User className="w-4 h-4 text-blue-600 shrink-0" />
               <span className="hidden sm:inline">{t('citizen_portal')}</span>
               <span className="sm:hidden">Citizen</span>
             </Link>
 
             <Link
               to="/authority"
-              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition shrink-0"
             >
-              <Shield className="w-4 h-4 text-white" />
+              <Shield className="w-4 h-4 text-white shrink-0" />
               <span className="hidden sm:inline">{t('authority_portal')}</span>
               <span className="sm:hidden">Authority</span>
             </Link>
@@ -84,7 +84,7 @@ export const Navbar: React.FC = () => {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -95,7 +95,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-4 shadow-lg">
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-4 shadow-lg">
           <div className="pt-2 flex items-center justify-between gap-2">
             <LanguageSelector variant="hero" />
             <StateSelector variant="hero" />
