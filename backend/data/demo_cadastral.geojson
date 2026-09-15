@@ -1,0 +1,201 @@
+{
+  "type": "FeatureCollection",
+  "name": "Wagholi_Cadastral_Parcels_Demo",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_number": "124/2",
+        "survey_number": "124/2",
+        "gat_number": "124/2",
+        "khasra_number": "124/2",
+        "khata_number": "894",
+        "village": "Wagholi",
+        "tehsil": "Haveli",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 1.42,
+        "area_unit": "Hectare",
+        "land_type": "Agricultural (Jirayat)",
+        "owner_name": "Rajendra Dattatray Patil",
+        "owner_name_native": "राजेंद्र दत्तात्रय पाटील",
+        "owner_name_normalized": "Rajendra Dattatray Patil",
+        "status": "NEEDS_REVIEW",
+        "confidence": 0.94,
+        "centroid_lat": 18.5794,
+        "centroid_lng": 73.9816,
+        "notice": "Demo Record — Not an Official Government Record"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.9804, 18.5786],
+            [73.9822, 18.5787],
+            [73.9828, 18.5799],
+            [73.9811, 18.5802],
+            [73.9802, 18.5795],
+            [73.9804, 18.5786]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_number": "124/1",
+        "survey_number": "124/1",
+        "gat_number": "124/1",
+        "khasra_number": "124/1",
+        "khata_number": "612",
+        "village": "Wagholi",
+        "tehsil": "Haveli",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 1.10,
+        "area_unit": "Hectare",
+        "land_type": "Agricultural (Bagayat)",
+        "owner_name": "Suresh Chandra Patel",
+        "owner_name_native": "सुरेश चंद्र पटेल",
+        "owner_name_normalized": "Suresh Chandra Patel",
+        "status": "VERIFIED",
+        "confidence": 0.98,
+        "centroid_lat": 18.5807,
+        "centroid_lng": 73.9813,
+        "notice": "Demo Record — Not an Official Government Record"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.9802, 18.5795],
+            [73.9811, 18.5802],
+            [73.9828, 18.5799],
+            [73.9825, 18.5815],
+            [73.9805, 18.5814],
+            [73.9802, 18.5795]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_number": "124/3",
+        "survey_number": "124/3",
+        "gat_number": "124/3",
+        "khasra_number": "124/3",
+        "khata_number": "745",
+        "village": "Wagholi",
+        "tehsil": "Haveli",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 0.95,
+        "area_unit": "Hectare",
+        "land_type": "Agricultural (Jirayat)",
+        "owner_name": "Rameshwar Sadashivrao Patil",
+        "owner_name_native": "रामेश्वर सदाशिवराव पाटील",
+        "owner_name_normalized": "Rameshwar Sadashivrao Patil",
+        "status": "VERIFIED",
+        "confidence": 0.96,
+        "centroid_lat": 18.5793,
+        "centroid_lng": 73.9836,
+        "notice": "Demo Record — Not an Official Government Record"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.9822, 18.5787],
+            [73.9845, 18.5789],
+            [73.9847, 18.5801],
+            [73.9828, 18.5799],
+            [73.9822, 18.5787]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_number": "124/4",
+        "survey_number": "124/4",
+        "gat_number": "124/4",
+        "khasra_number": "124/4",
+        "khata_number": "102",
+        "village": "Wagholi",
+        "tehsil": "Haveli",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 0.40,
+        "area_unit": "Hectare",
+        "land_type": "Canal / Public Road",
+        "owner_name": "Gram Panchayat Wagholi",
+        "owner_name_native": "ग्रामपंचायत वाघोली",
+        "owner_name_normalized": "Gram Panchayat Wagholi",
+        "status": "VERIFIED",
+        "confidence": 0.99,
+        "centroid_lat": 18.5781,
+        "centroid_lng": 73.9818,
+        "notice": "Demo Record — Not an Official Government Record"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.9804, 18.5786],
+            [73.9822, 18.5787],
+            [73.9845, 18.5789],
+            [73.9842, 18.5776],
+            [73.9806, 18.5775],
+            [73.9804, 18.5786]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "parcel_number": "208/1",
+        "survey_number": "208/1",
+        "gat_number": "208/1",
+        "khasra_number": "208/1",
+        "khata_number": "894",
+        "village": "Wagholi",
+        "tehsil": "Haveli",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 0.87,
+        "area_unit": "Hectare",
+        "land_type": "Agricultural (Irrigated)",
+        "owner_name": "Rajendra Dattatray Patil",
+        "owner_name_native": "राजेंद्र दत्तात्रय पाटील",
+        "owner_name_normalized": "Rajendra Dattatray Patil",
+        "status": "VERIFIED",
+        "confidence": 0.97,
+        "centroid_lat": 18.5835,
+        "centroid_lng": 73.9842,
+        "notice": "Demo Record — Not an Official Government Record"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [73.9830, 18.5825],
+            [73.9852, 18.5828],
+            [73.9856, 18.5843],
+            [73.9835, 18.5845],
+            [73.9828, 18.5835],
+            [73.9830, 18.5825]
+          ]
+        ]
+      }
+    }
+  ]
+}
