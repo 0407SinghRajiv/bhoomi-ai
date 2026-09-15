@@ -42,6 +42,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,9 +51,26 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    from app.database import engine
+    from app.database import engine, SessionLocal
+    from app.models import Base, State
     from sqlalchemy import text
     try:
+        # Auto-create all tables if they do not exist
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables verified/created successfully.")
+
+        # If database is fresh (no states), seed initial data
+        db = SessionLocal()
+        try:
+            state_count = db.query(State).count()
+            if state_count == 0:
+                logger.info("Fresh database detected. Auto-seeding initial database...")
+                from app.seed import seed_database
+                seed_database()
+                logger.info("Auto-seeding completed successfully.")
+        finally:
+            db.close()
+
         with engine.connect() as conn:
             if engine.url.drivername.startswith("sqlite"):
                 info = conn.execute(text("PRAGMA table_info(audit_logs)")).fetchall()
@@ -61,7 +79,8 @@ def on_startup():
                     conn.execute(text("ALTER TABLE audit_logs ADD COLUMN document_id INTEGER REFERENCES documents(id)"))
                     conn.commit()
     except Exception as e:
-        logger.warning(f"Schema auto-migration notice: {e}")
+        logger.error(f"Startup initialization notice: {e}", exc_info=True)
+
 
 
 # Global Exception Handlers for Clean Error Responses
