@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from typing import List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -11,6 +12,7 @@ from app.models.document import Document
 from app.models.reconciliation import ReconciliationCase, ReconciliationResult
 from app.models.conflict import Conflict
 from app.models.audit import AuditLog
+from app.models.access_request import AccessRequest
 from app.schemas.cadastral import (
     CadastralParcelRead,
     CadastralParcelDetail,
@@ -117,11 +119,13 @@ def list_cadastral_parcels(
 @router.get("/{parcel_id}", response_model=CadastralParcelDetail)
 def get_cadastral_parcel_detail(
     parcel_id: int,
+    requester_name: Optional[str] = Query(None, description="Requester citizen name for access permission check"),
     db: Session = Depends(get_db),
 ):
     """
     Returns full cadastral parcel detail, including linked LandRecord,
     associated source documents, parsed GeoJSON geometry, and reconciliation status.
+    Enforces privacy access control for neighboring/other citizen land parcels.
     """
     parcel = db.query(CadastralParcel).filter(CadastralParcel.id == parcel_id).first()
     if not parcel:
@@ -138,6 +142,35 @@ def get_cadastral_parcel_detail(
         except Exception:
             geom_dict = None
 
+    # Check access permission
+    req_name_str = requester_name if isinstance(requester_name, str) else None
+    effective_requester = req_name_str or "Rajendra Dattatray Patil"
+    is_owner = False
+    if parcel.owner_name and effective_requester.lower() in parcel.owner_name.lower():
+        is_owner = True
+
+    approved_request = None
+    pending_request = None
+    if not is_owner:
+        requests = db.query(AccessRequest).filter(
+            AccessRequest.applicant_name.ilike(f"%{effective_requester.strip()}%"),
+            or_(
+                AccessRequest.target_parcel_id == parcel.id,
+                AccessRequest.survey_number == parcel.survey_number,
+                AccessRequest.survey_number == parcel.parcel_number,
+            ),
+        ).all()
+        now = datetime.now(timezone.utc)
+        for req in requests:
+            if req.status == "APPROVED":
+                if not req.valid_until or req.valid_until.replace(tzinfo=timezone.utc) >= now:
+                    approved_request = req
+                    break
+            elif req.status == "PENDING":
+                pending_request = req
+
+    is_authorized = is_owner or (approved_request is not None)
+
     # Linked LandRecord
     land_rec_dict = None
     linked_case = None
@@ -146,31 +179,70 @@ def get_cadastral_parcel_detail(
         if lr:
             land_rec_dict = {
                 "id": lr.id,
-                "owner_name": lr.owner_name,
+                "owner_name": lr.owner_name if is_authorized else f"{lr.owner_name[:2]}*** (Protected)",
                 "survey_number": lr.survey_number,
                 "gat_number": lr.gat_number,
                 "khasra_number": lr.khasra_number,
-                "khata_number": lr.khata_number,
+                "khata_number": lr.khata_number if is_authorized else "***",
                 "village": lr.village,
                 "taluka_tehsil": lr.taluka_tehsil,
                 "district": lr.district,
                 "area_value": lr.area_value,
                 "area_unit": lr.area_unit,
                 "land_type": lr.land_type,
-                "mutation_number": lr.mutation_number,
-                "registration_number": lr.registration_number,
-                "document_date": lr.document_date.isoformat() if lr.document_date else None,
+                "mutation_number": lr.mutation_number if is_authorized else "*** PROTECTED ***",
+                "registration_number": lr.registration_number if is_authorized else "*** PROTECTED ***",
+                "document_date": lr.document_date.isoformat() if (lr.document_date and is_authorized) else None,
             }
-            if lr.document and lr.document.case:
+            if is_authorized and lr.document and lr.document.case:
                 linked_case = lr.document.case
 
-    # If not found through LandRecord, try source_document
+    # If not authorized: return privacy-protected summary without confidential deeds
+    if not is_authorized:
+        access_status = "PENDING_REQUEST" if pending_request else "RESTRICTED"
+        return CadastralParcelDetail(
+            id=parcel.id,
+            parcel_number=parcel.parcel_number,
+            survey_number=parcel.survey_number,
+            khasra_number=parcel.khasra_number,
+            gat_number=parcel.gat_number,
+            khata_number=None,
+            village=parcel.village,
+            tehsil=parcel.tehsil,
+            district=parcel.district,
+            state=parcel.state,
+            area=parcel.area,
+            area_unit=parcel.area_unit,
+            land_type=parcel.land_type,
+            owner_name=f"{parcel.owner_name[:2]}*** (Protected)",
+            owner_name_native=None,
+            owner_name_normalized=None,
+            status=parcel.status,
+            confidence=parcel.confidence,
+            centroid_lat=parcel.centroid_lat,
+            centroid_lng=parcel.centroid_lng,
+            record_id=parcel.record_id,
+            source_document_id=None,
+            geometry=parcel.geometry,
+            created_at=parcel.created_at,
+            updated_at=parcel.updated_at,
+            land_record=land_rec_dict,
+            documents=[],
+            reconciliation=None,
+            geometry_geojson=geom_dict,
+            is_restricted=True,
+            access_status=access_status,
+            access_request_id=pending_request.id if pending_request else None,
+            access_valid_until=None,
+            notice="Protected Record — Official Access Request Required.",
+        )
+
+    # If authorized: fetch linked case and documents
     if not linked_case and parcel.source_document_id:
         doc = db.query(Document).filter(Document.id == parcel.source_document_id).first()
         if doc and doc.case:
             linked_case = doc.case
 
-    # Default fallback to primary demo case if available
     if not linked_case:
         linked_case = db.query(ReconciliationCase).first()
 
@@ -220,12 +292,15 @@ def get_cadastral_parcel_detail(
             conflicts_count=len(conflicts_data),
         )
 
+    access_status = "OWNED" if is_owner else "APPROVED"
+    valid_until_str = approved_request.valid_until.isoformat() if (approved_request and approved_request.valid_until) else None
+
     return CadastralParcelDetail(
         id=parcel.id,
         parcel_number=parcel.parcel_number,
         survey_number=parcel.survey_number,
-        gat_number=parcel.gat_number,
         khasra_number=parcel.khasra_number,
+        gat_number=parcel.gat_number,
         khata_number=parcel.khata_number,
         village=parcel.village,
         tehsil=parcel.tehsil,
@@ -250,6 +325,11 @@ def get_cadastral_parcel_detail(
         documents=docs_summary,
         reconciliation=recon_summary,
         geometry_geojson=geom_dict,
+        is_restricted=False,
+        access_status=access_status,
+        access_request_id=approved_request.id if approved_request else None,
+        access_valid_until=valid_until_str,
+        notice=None,
     )
 
 

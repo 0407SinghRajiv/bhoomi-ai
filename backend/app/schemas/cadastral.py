@@ -85,3 +85,9 @@ class CadastralParcelDetail(CadastralParcelRead):
     documents: List[CadastralDocumentSummary] = []
     reconciliation: Optional[CadastralReconciliationSummary] = None
     geometry_geojson: Optional[Dict[str, Any]] = None
+    is_restricted: Optional[bool] = False
+    access_status: Optional[str] = "OWNED"
+    access_request_id: Optional[int] = None
+    access_valid_until: Optional[str] = None
+    notice: Optional[str] = None
+

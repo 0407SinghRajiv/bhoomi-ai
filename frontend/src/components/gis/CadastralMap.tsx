@@ -18,6 +18,9 @@ interface CadastralMapProps {
   height?: string;
   zoomToSelected?: boolean;
   interactive?: boolean;
+  citizenName?: string;
+  ownedSurveyNumbers?: string[];
+  approvedSurveyNumbers?: string[];
 }
 
 const DEFAULT_SATELLITE_URL =
@@ -38,6 +41,9 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   height = '560px',
   zoomToSelected = true,
   interactive = true,
+  citizenName,
+  ownedSurveyNumbers = [],
+  approvedSurveyNumbers = [],
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -114,28 +120,79 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
 
   // Style for cadastral polygons
   const getParcelStyle = useCallback(
-    (parcelId: number) => {
-      const isSelected = parcelId === selectedParcelId;
+    (props: ApiCadastralParcel) => {
+      const isSelected = props.id === selectedParcelId;
+      const isOwned =
+        (citizenName && props.owner_name && props.owner_name.toLowerCase().includes(citizenName.toLowerCase())) ||
+        ownedSurveyNumbers.includes(props.survey_number) ||
+        ownedSurveyNumbers.includes(props.parcel_number);
+      const isApproved =
+        approvedSurveyNumbers.includes(props.survey_number) ||
+        approvedSurveyNumbers.includes(props.parcel_number);
+
       if (isSelected) {
+        if (isOwned) {
+          return {
+            color: '#10B981', // Vibrant Emerald green for owned parcel
+            weight: 4,
+            opacity: 1,
+            fillColor: '#10B981',
+            fillOpacity: 0.42,
+            dashArray: '',
+          };
+        }
+        if (isApproved) {
+          return {
+            color: '#0284C7', // Sky Blue for approved access parcel
+            weight: 4,
+            opacity: 1,
+            fillColor: '#0284C7',
+            fillOpacity: 0.38,
+            dashArray: '',
+          };
+        }
         return {
-          color: '#22C55E', // Vibrant Emerald green for selected parcel
+          color: '#F59E0B', // Amber for restricted selected parcel
           weight: 4,
           opacity: 1,
-          fillColor: '#10B981',
+          fillColor: '#F59E0B',
           fillOpacity: 0.38,
           dashArray: '',
         };
       }
+
+      if (isOwned) {
+        return {
+          color: '#059669', // Emerald green for owned holding
+          weight: 2.8,
+          opacity: 0.95,
+          fillColor: '#10B981',
+          fillOpacity: 0.25,
+          dashArray: '',
+        };
+      }
+
+      if (isApproved) {
+        return {
+          color: '#0284C7', // Sky blue for authorized
+          weight: 2.2,
+          opacity: 0.9,
+          fillColor: '#0284C7',
+          fillOpacity: 0.2,
+          dashArray: '',
+        };
+      }
+
       return {
-        color: '#F59E0B', // Bright Cadastral Amber / Gold
-        weight: 2.2,
-        opacity: 0.95,
+        color: '#D97706', // Amber for restricted neighbor holding
+        weight: 2,
+        opacity: 0.85,
         fillColor: '#F59E0B',
-        fillOpacity: 0.16,
-        dashArray: '3, 4',
+        fillOpacity: 0.14,
+        dashArray: '4, 4',
       };
     },
-    [selectedParcelId]
+    [selectedParcelId, citizenName, ownedSurveyNumbers, approvedSurveyNumbers]
   );
 
   // Render GeoJSON parcel overlay and label markers
@@ -179,11 +236,18 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
 
     const layer = L.geoJSON(geojsonData, {
       style: (feature) => {
-        const pId = feature?.properties?.id;
-        return getParcelStyle(pId);
+        const props = feature?.properties as ApiCadastralParcel;
+        return getParcelStyle(props);
       },
       onEachFeature: (feature, featureLayer) => {
         const props = feature.properties as ApiCadastralParcel;
+        const isOwned =
+          (citizenName && props.owner_name && props.owner_name.toLowerCase().includes(citizenName.toLowerCase())) ||
+          ownedSurveyNumbers.includes(props.survey_number) ||
+          ownedSurveyNumbers.includes(props.parcel_number);
+        const isApproved =
+          approvedSurveyNumbers.includes(props.survey_number) ||
+          approvedSurveyNumbers.includes(props.parcel_number);
 
         if (interactive) {
           featureLayer.on({
@@ -196,16 +260,16 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
               const target = e.target;
               if (props.id !== selectedParcelId) {
                 target.setStyle({
-                  fillOpacity: 0.3,
-                  weight: 3,
-                  color: '#FBBF24',
+                  fillOpacity: 0.35,
+                  weight: 3.5,
+                  color: isOwned ? '#34D399' : (isApproved ? '#38BDF8' : '#FBBF24'),
                 });
               }
             },
             mouseout: (e) => {
               const target = e.target;
               if (props.id !== selectedParcelId) {
-                target.setStyle(getParcelStyle(props.id));
+                target.setStyle(getParcelStyle(props));
               }
             },
           });
@@ -214,20 +278,36 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
         // Parcel Label Marker in center
         if (markersLayerRef.current && props.centroid_lat && props.centroid_lng) {
           const isSelected = props.id === selectedParcelId;
+          let badgeClass = 'bg-slate-900/90 text-amber-300 border border-amber-400/60';
+          let tagText = '';
+
+          if (isSelected) {
+            badgeClass = isOwned
+              ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 ring-offset-1 scale-105'
+              : (isApproved
+                ? 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-1 scale-105'
+                : 'bg-amber-600 text-white ring-2 ring-amber-300 ring-offset-1 scale-105');
+          } else if (isOwned) {
+            badgeClass = 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/70';
+            tagText = ' ★';
+          } else if (isApproved) {
+            badgeClass = 'bg-blue-950/90 text-blue-300 border border-blue-500/70';
+            tagText = ' ✓';
+          } else {
+            badgeClass = 'bg-slate-900/90 text-amber-300 border border-amber-500/40';
+            tagText = ' 🔒';
+          }
+
           const labelHtml = `
-            <div class="px-1.5 py-0.5 rounded shadow-sm text-center font-mono font-bold text-[11px] whitespace-nowrap cursor-pointer transition ${
-              isSelected
-                ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 ring-offset-1 scale-105'
-                : 'bg-slate-900/90 text-amber-300 border border-amber-400/60 backdrop-blur-sm'
-            }">
-              <span>${props.survey_number || props.parcel_number}</span>
+            <div class="px-2 py-0.5 rounded shadow-md text-center font-mono font-bold text-[11px] whitespace-nowrap cursor-pointer transition ${badgeClass} backdrop-blur-sm">
+              <span>${props.survey_number || props.parcel_number}${tagText}</span>
             </div>
           `;
           const icon = L.divIcon({
             html: labelHtml,
             className: 'cadastral-label-marker',
-            iconSize: [50, 20],
-            iconAnchor: [25, 10],
+            iconSize: [60, 22],
+            iconAnchor: [30, 11],
           });
           const marker = L.marker([props.centroid_lat, props.centroid_lng], { icon, interactive: true });
           if (interactive && onSelectParcel) {
@@ -300,7 +380,7 @@ export const CadastralMap: React.FC<CadastralMapProps> = ({
   };
 
   return (
-    <div className="relative rounded-xl border border-slate-700 bg-slate-950 overflow-hidden shadow-xl" style={{ height }}>
+    <div className="relative rounded-xl border border-slate-700 bg-slate-950 overflow-hidden shadow-xl isolate z-0" style={{ height }}>
       {/* Map Header Overlay */}
       <div className="absolute top-3 left-3 z-[400] flex items-center gap-2">
         {/* Search Box */}

@@ -611,6 +611,9 @@ export const api = {
   getPageImageUrl: (documentId: number, pageNumber: number) =>
     `${API_BASE_URL}/api/documents/${documentId}/pages/${pageNumber}/image`,
 
+  getDocumentPageImageUrl: (documentId: number, pageNumber: number) =>
+    `${API_BASE_URL}/api/documents/${documentId}/pages/${pageNumber}/image`,
+
   getDocumentExtractions: (documentId: number) =>
     request<ApiDocumentExtractionResponse>(`/api/documents/${documentId}/extractions`),
 
@@ -720,8 +723,10 @@ export const api = {
     return request<ApiCadastralGeoJSONCollection>(`/api/cadastral-parcels?${sp.toString()}`);
   },
 
-  getCadastralParcelDetail: (id: number) =>
-    request<ApiCadastralParcelDetail>(`/api/cadastral-parcels/${id}`),
+  getCadastralParcelDetail: (id: number, requester_name?: string) => {
+    const sp = requester_name ? `?requester_name=${encodeURIComponent(requester_name)}` : '';
+    return request<ApiCadastralParcelDetail>(`/api/cadastral-parcels/${id}${sp}`);
+  },
 
   getCadastralParcelDocuments: (id: number) =>
     request<ApiCadastralDocumentSummary[]>(`/api/cadastral-parcels/${id}/documents`),
@@ -904,6 +909,11 @@ export interface ApiCadastralParcelDetail extends ApiCadastralParcel {
   documents: ApiCadastralDocumentSummary[];
   reconciliation?: ApiCadastralReconciliationSummary | null;
   geometry_geojson?: { type: string; coordinates: any } | null;
+  is_restricted?: boolean;
+  access_status?: 'OWNED' | 'APPROVED' | 'PENDING_REQUEST' | 'RESTRICTED' | string;
+  access_request_id?: number | null;
+  access_valid_until?: string | null;
+  notice?: string | null;
 }
 
 export interface ApiParcelVerifyPayload {

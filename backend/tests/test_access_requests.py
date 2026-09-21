@@ -91,3 +91,15 @@ def test_restricted_record_detail_privacy():
     assert data["access_status"] in ["LOCKED", "PENDING_REQUEST"]
     assert "Protected" in data["owner_name"] or "***" in data["owner_name"]
     assert len(data["documents"]) == 0
+
+
+def test_cadastral_parcel_neighbor_access_control():
+    """When querying cadastral parcel of another citizen without approved request, sensitive deeds are hidden"""
+    res = client.get("/api/cadastral-parcels/2?requester_name=Unknown+Citizen")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["is_restricted"] is True
+    assert data["access_status"] in ["RESTRICTED", "PENDING_REQUEST"]
+    assert len(data["documents"]) == 0
+    assert "***" in data["owner_name"]
+

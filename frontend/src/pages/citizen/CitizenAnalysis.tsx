@@ -738,7 +738,7 @@ export const CitizenAnalysis: React.FC = () => {
 
             {/* Citizen Submit Modal */}
             {showSubmitModal && (
-              <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+              <div className="fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
                 <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden space-y-0">
                   <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -801,7 +801,7 @@ export const CitizenAnalysis: React.FC = () => {
 
         {/* Detailed Inspector Modal / Side Drawer */}
         {activeField && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fadeIn">
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fadeIn">
             <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full overflow-hidden space-y-0">
               
               {/* Modal Header */}

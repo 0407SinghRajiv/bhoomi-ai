@@ -101,20 +101,20 @@ export const CitizenMyLand: React.FC = () => {
   const handleSelectParcel = async (parcel: ApiCadastralParcel) => {
     setSelectedParcelId(parcel.id);
     try {
-      const detail = await api.getCadastralParcelDetail(parcel.id);
+      const detail = await api.getCadastralParcelDetail(parcel.id, CITIZEN_NAME);
       setSelectedParcel(detail);
     } catch (err) {
       console.error('Failed to fetch parcel detail:', err);
     }
   };
 
-  const handleOpenAccessModal = (parcel: ApiPublicRegistryParcel) => {
+  const handleOpenAccessModal = (parcel: any) => {
     setTargetRequestParcel({
-      parcel_id: parcel.parcel_id,
-      record_id: parcel.land_record_id,
-      survey_number: parcel.survey_number,
-      village: parcel.village,
-      district: parcel.district,
+      parcel_id: parcel.parcel_id || parcel.id,
+      record_id: parcel.land_record_id || parcel.record_id,
+      survey_number: parcel.survey_number || parcel.parcel_number,
+      village: parcel.village || 'Wagholi',
+      district: parcel.district || 'Pune',
       owner_name: parcel.owner_name,
       area: parcel.area,
       area_unit: parcel.area_unit,
@@ -125,6 +125,9 @@ export const CitizenMyLand: React.FC = () => {
   const handleRequestCreated = (newReq: ApiAccessRequest) => {
     setAccessRequests((prev) => [newReq, ...prev]);
     loadPublicRegistryAndRequests(registrySearch);
+    if (selectedParcelId) {
+      api.getCadastralParcelDetail(selectedParcelId, CITIZEN_NAME).then((d) => setSelectedParcel(d));
+    }
   };
 
   const totalArea = landRecords.reduce((acc, r) => acc + (r.area_value || 0), 0).toFixed(2);
@@ -364,34 +367,141 @@ export const CitizenMyLand: React.FC = () => {
                     selectedParcelId={selectedParcelId}
                     onSelectParcel={handleSelectParcel}
                     height="450px"
+                    citizenName={CITIZEN_NAME}
+                    ownedSurveyNumbers={landRecords.map((r) => r.survey_number)}
+                    approvedSurveyNumbers={accessRequests.filter((r) => r.status === 'APPROVED').map((r) => r.survey_number)}
                   />
                 </div>
                 <div>
                   {selectedParcel ? (
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-xs">
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <span className="font-bold text-slate-900 text-sm">
-                          Parcel #{selectedParcel.parcel_number}
-                        </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                          {selectedParcel.status}
-                        </span>
-                      </div>
-                      <div className="space-y-1.5 text-slate-600">
-                        <div><strong>Khatedar:</strong> {selectedParcel.owner_name}</div>
-                        <div><strong>Area:</strong> {selectedParcel.area} {selectedParcel.area_unit}</div>
-                        <div><strong>Tehsil:</strong> {selectedParcel.tehsil}, {selectedParcel.district}</div>
-                      </div>
-                      <div className="pt-2">
-                        <Link
-                          to={`/citizen/land/${selectedParcel.record_id || 4}`}
-                          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
+                    (() => {
+                      const isOwned =
+                        (selectedParcel.owner_name &&
+                          selectedParcel.owner_name.toLowerCase().includes(CITIZEN_NAME.toLowerCase())) ||
+                        landRecords.some(
+                          (r) =>
+                            r.survey_number === selectedParcel.survey_number ||
+                            r.survey_number === selectedParcel.parcel_number
+                        );
+                      const matchingReq = accessRequests.find(
+                        (r) =>
+                          r.survey_number === selectedParcel.survey_number ||
+                          r.survey_number === selectedParcel.parcel_number ||
+                          r.target_parcel_id === selectedParcel.id
+                      );
+                      const isApproved =
+                        matchingReq?.status === 'APPROVED' || selectedParcel.access_status === 'APPROVED';
+                      const isPending =
+                        matchingReq?.status === 'PENDING' || selectedParcel.access_status === 'PENDING_REQUEST';
+
+                      return (
+                        <div
+                          className={`bg-slate-50 border rounded-xl p-4 space-y-3.5 text-xs shadow-sm ${
+                            isOwned
+                              ? 'border-emerald-300 ring-1 ring-emerald-400/20'
+                              : isApproved
+                              ? 'border-blue-300 ring-1 ring-blue-400/20'
+                              : 'border-amber-300 bg-amber-50/30'
+                          }`}
                         >
-                          <span>Open Full Land Detail</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    </div>
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <span className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                              <span>Parcel #{selectedParcel.parcel_number}</span>
+                            </span>
+                            {isOwned ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 flex items-center gap-1 border border-emerald-300">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Your Land</span>
+                              </span>
+                            ) : isApproved ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 flex items-center gap-1 border border-blue-300">
+                                <Unlock className="w-3 h-3" />
+                                <span>Authorized</span>
+                              </span>
+                            ) : isPending ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 flex items-center gap-1 border border-amber-300">
+                                <Clock className="w-3 h-3" />
+                                <span>Pending Approval</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 flex items-center gap-1 border border-amber-300">
+                                <Lock className="w-3 h-3" />
+                                <span>Restricted</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Privacy Protection Notice for Neighbors */}
+                          {!isOwned && !isApproved && (
+                            <div className="p-2.5 rounded-lg bg-amber-100/70 border border-amber-300 text-[11px] text-amber-900 space-y-1">
+                              <div className="font-bold flex items-center gap-1">
+                                <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
+                                <span>Neighboring Land Record</span>
+                              </div>
+                              <p className="leading-snug text-slate-700">
+                                Full 7/12 extract and registered source documents are protected. Submit an access request to the Revenue Authority (Tahsildar) to inspect.
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5 text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
+                            <div className="flex justify-between">
+                              <strong className="text-slate-400">Khatedar:</strong>
+                              <span className="font-bold text-slate-900">
+                                {isOwned || isApproved
+                                  ? selectedParcel.owner_name
+                                  : `${(selectedParcel.owner_name || 'Protected').slice(0, 2)}*** (Protected)`}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <strong className="text-slate-400">Area:</strong>
+                              <span className="font-bold text-slate-900">
+                                {selectedParcel.area} {selectedParcel.area_unit}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <strong className="text-slate-400">Location:</strong>
+                              <span className="text-slate-700 font-medium">
+                                {selectedParcel.village}, {selectedParcel.tehsil}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <strong className="text-slate-400">Category:</strong>
+                              <span className="text-slate-700 font-medium">{selectedParcel.land_type}</span>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons based on authorization */}
+                          <div className="pt-1">
+                            {isOwned || isApproved ? (
+                              <Link
+                                to={`/citizen/land/${selectedParcel.record_id || 4}`}
+                                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-md"
+                              >
+                                <span>Open Full Land Detail & Documents</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </Link>
+                            ) : isPending ? (
+                              <button
+                                disabled
+                                className="w-full py-2.5 bg-amber-200 text-amber-900 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed border border-amber-300"
+                              >
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>Permission Request Under Authority Review</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleOpenAccessModal(selectedParcel)}
+                                className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-md"
+                              >
+                                <Lock className="w-3.5 h-3.5" />
+                                <span>Request Permission from Authority</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()
                   ) : (
                     <div className="p-8 text-center text-slate-400 text-xs border border-dashed rounded-xl">
                       Click a parcel on map to view details.

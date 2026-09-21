@@ -281,6 +281,8 @@ export const CitizenLandDetail: React.FC = () => {
                 parcels={allParcels}
                 selectedParcelId={selectedParcelId}
                 height="420px"
+                citizenName={CITIZEN_NAME}
+                ownedSurveyNumbers={[record.survey_number]}
               />
             </div>
 
