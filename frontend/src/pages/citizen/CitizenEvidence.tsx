@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { PortalLayout } from '../../components/layout/PortalLayout';
 import { api } from '../../services/api';
+import { getFallbackDocumentDataUri } from '../../utils/documentFallbackImages';
 import type {
   ApiReconciliationRunResponse,
   ApiFieldEvaluationItem,
@@ -565,8 +566,15 @@ export const CitizenEvidence: React.FC = () => {
                   <img
                     id="document-viewport-image"
                     src={api.getPageImageUrl(currentDocId, currentPage)}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      const fallback = getFallbackDocumentDataUri(currentDocId, currentPage);
+                      if (target.src !== fallback) {
+                        target.src = fallback;
+                      }
+                    }}
                     alt={`Document Page Preview (Doc ${currentDocId}, Page ${currentPage})`}
-                    className="max-h-[600px] object-contain rounded bg-white"
+                    className="max-h-[600px] object-contain rounded bg-white shadow-md"
                   />
                   {renderBoundingOverlay()}
                 </div>

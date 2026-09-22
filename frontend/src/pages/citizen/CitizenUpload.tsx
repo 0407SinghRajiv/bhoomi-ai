@@ -15,6 +15,7 @@ import {
 import { PortalLayout } from '../../components/layout/PortalLayout';
 import { useAppState } from '../../context/AppStateContext';
 import { api } from '../../services/api';
+import { getFallbackDocumentDataUri } from '../../utils/documentFallbackImages';
 import type { DocumentProcessingStatusResponse } from '../../services/api';
 
 interface UploadSlotState {
@@ -534,6 +535,13 @@ export const CitizenUpload: React.FC = () => {
                             <div className="h-52 bg-white rounded border border-slate-200 overflow-hidden flex items-center justify-center relative">
                               <img
                                 src={api.getPageImageUrl(docResult.document_id, page.page_number)}
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  const fallback = getFallbackDocumentDataUri(docResult.document_id, page.page_number);
+                                  if (target.src !== fallback) {
+                                    target.src = fallback;
+                                  }
+                                }}
                                 alt={`Page ${page.page_number}`}
                                 className="max-h-full max-w-full object-contain"
                               />

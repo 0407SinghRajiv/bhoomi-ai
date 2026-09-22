@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { PortalLayout } from '../../components/layout/PortalLayout';
 import { api } from '../../services/api';
+import { getFallbackDocumentDataUri } from '../../utils/documentFallbackImages';
 import type { ApiDocumentExtractionResponse, ApiExtractedFieldItem } from '../../services/api';
 
 export const CitizenExtraction: React.FC = () => {
@@ -519,6 +520,13 @@ export const CitizenExtraction: React.FC = () => {
                       <div className="h-64 bg-slate-900 rounded-lg border border-slate-300 relative overflow-hidden flex items-center justify-center">
                         <img
                           src={api.getPageImageUrl(documentId, selectedField.page_number || 1)}
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            const fallback = getFallbackDocumentDataUri(documentId, selectedField.page_number || 1);
+                            if (target.src !== fallback) {
+                              target.src = fallback;
+                            }
+                          }}
                           alt="Rendered Page Viewport"
                           className="max-h-full max-w-full object-contain select-none"
                         />
